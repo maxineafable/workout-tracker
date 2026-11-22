@@ -4,7 +4,7 @@ import { createFileRoute, Navigate, useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import Form, { type Workout } from '@/components/workouts/form';
 
-export const Route = createFileRoute('/workouts/$workoutId/edit')({
+export const Route = createFileRoute('/workouts/$workoutId_/edit')({
   component: RouteComponent,
 });
 

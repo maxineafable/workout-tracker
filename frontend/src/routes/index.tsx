@@ -1,6 +1,7 @@
 import Footer from '@/components/main/footer';
 import { Button } from '@/components/ui/button';
 import { meQuery } from '@/lib/query';
+import { formatDate } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, Navigate, useNavigate } from '@tanstack/react-router'
 
@@ -170,7 +171,7 @@ function Index() {
                   <div className="mb-3 flex items-start justify-between gap-2">
                     <div>
                       <h3 className="text-[15px] font-bold">{workout.title}</h3>
-                      <p className="text-xs text-neutral-600">{workout.date}</p>
+                      <p className="text-xs text-neutral-600">{formatDate(workout.date)}</p>
                     </div>
 
                     <div className="flex shrink-0 items-center gap-4">
@@ -220,7 +221,7 @@ function Index() {
                     </span>
 
                     <Link
-                      to="/"
+                      to="/workouts/$workoutId"
                       params={{ workoutId: String(workout.id) }}
                       className="font-semibold text-pink-800 hover:text-pink-900"
                     >

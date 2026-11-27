@@ -22,13 +22,26 @@ public static class WorkoutEndpoints
 
 	private static string? GetUserId(ClaimsPrincipal p) => p.FindFirstValue(ClaimTypes.NameIdentifier);
 
-	public static async Task<IResult> GetAllWorkouts(ClaimsPrincipal principal, ProjectDb db)
+	public static async Task<IResult> GetAllWorkouts(ClaimsPrincipal principal, ProjectDb db, string? search)
 	{
 		var userId = GetUserId(principal);
 
-		return TypedResults.Ok(await db.Workouts
-			.AsNoTracking()
-			.Where(w => w.UserId == userId)
+		var query = db.Workouts
+		.AsNoTracking()
+		.Where(w => w.UserId == userId);
+
+		if (!string.IsNullOrWhiteSpace(search))
+		{
+			var term = search.Trim();
+			query = query.Where(w =>
+				EF.Functions.ILike(w.Title, $"%{term}%") ||
+				w.Exercises.Any(e => EF.Functions.ILike(e.Name, $"%{term}%"))
+			);
+		}
+
+		return TypedResults.Ok(await query
+			.OrderByDescending(w => w.Date)
+			.ThenByDescending(w => w.Id)
 			.Include(w => w.Exercises)
 			.Select(w => new WorkoutResponse(w))
 			.ToArrayAsync());

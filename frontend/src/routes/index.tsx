@@ -1,8 +1,8 @@
 import Footer from '@/components/main/footer';
 import { Button } from '@/components/ui/button';
 import { meQuery } from '@/lib/query';
-import { formatDate } from '@/lib/utils';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { formatDate, useDebouncedValue } from '@/lib/utils';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, Navigate, useNavigate } from '@tanstack/react-router'
 
 import {
@@ -13,6 +13,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+import { useState } from 'react';
 
 export const Route = createFileRoute('/')({
   component: Index,
@@ -41,19 +42,25 @@ function Index() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search.trim())
+
   const me = useQuery(meQuery)
 
   const workouts = useQuery<Workout[]>({
-    queryKey: ['workouts'],
+    queryKey: ['workouts', { search: debouncedSearch }],
     enabled: !!me.data,
-    queryFn: async () => {
-      const res = await fetch('/api/workouts', {
+    placeholderData: keepPreviousData,
+    queryFn: async ({ signal }) => {
+      const params = new URLSearchParams()
+      if (debouncedSearch) params.set('search', debouncedSearch)
+
+      const res = await fetch(`/api/workouts?${params}`, {
         credentials: 'include',
+        signal,
       })
 
-      if (!res.ok)
-        throw new Error("failed to fetch workouts");
-
+      if (!res.ok) throw new Error('failed to fetch workouts')
       return res.json() as Promise<Workout[]>
     },
   })
@@ -122,6 +129,8 @@ function Index() {
             <Search size={19} className="shrink-0 text-neutral-600" />
             <input
               type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
               placeholder="Search workout title (e.g. Chest, Legs)..."
               className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-500"
             />
